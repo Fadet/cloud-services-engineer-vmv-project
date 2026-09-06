@@ -159,7 +159,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ needs.terraform.outputs.host }}
-          username: ${{ secrets.USER }}
+          username: ${{ vars.USER }}
           key: ${{ secrets.SSH_KEY }}
           source: "docker-compose.production.yml"
           target: "~"
@@ -168,7 +168,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ needs.terraform.outputs.host }}
-          username: ${{ secrets.USER }}
+          username: ${{ vars.USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
             cat > ~/.env << EOF
@@ -183,7 +183,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ needs.terraform.outputs.host }}
-          username: ${{ secrets.USER }}
+          username: ${{ vars.USER }}
           key: ${{ secrets.SSH_KEY }}
           command_timeout: 20m
           script: |
