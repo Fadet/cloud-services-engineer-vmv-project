@@ -1,6 +1,6 @@
 data "yandex_compute_image" "image" {
   family = var.image_family
-} 
+}
 
 resource "yandex_compute_instance" "vm_1" {
   name                      = "kittygram-vm"
@@ -23,17 +23,17 @@ resource "yandex_compute_instance" "vm_1" {
   }
 
   network_interface {
-    subnet_id            = yandex_vpc_subnet.infra_subnet[0].id
-    nat                  = true
-    security_group_ids   = [yandex_vpc_security_group.infra_sg.id]
+    subnet_id          = yandex_vpc_subnet.infra_subnet[0].id
+    nat                = true
+    security_group_ids = [yandex_vpc_security_group.infra_sg.id]
   }
 
   metadata = {
     serial-port-enable = "1"
-    user-data = templatefile("${path.module}/cloud-init.yaml", 
-    {
-      ssh_user       = var.ssh_user
-      ssh_public_key = var.ssh_public_key
+    user-data = templatefile("${path.module}/cloud-init.yaml",
+      {
+        ssh_user       = var.ssh_user
+        ssh_public_key = var.ssh_public_key
     })
   }
 }

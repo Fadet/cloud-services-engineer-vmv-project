@@ -11,15 +11,15 @@ variable "zone" {
 
 variable "vpc_name" {
   description = "VPC Name"
-  type = string
-  default = "infra-network"
+  type        = string
+  default     = "infra-network"
 }
 
 variable "net_cidr" {
   description = "Subnet structure"
   type = list(object({
-    name = string,
-    zone = string,
+    name   = string,
+    zone   = string,
     prefix = string
   }))
 
