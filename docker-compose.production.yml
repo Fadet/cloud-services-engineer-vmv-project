@@ -27,7 +27,7 @@ services:
   gateway:
     image: kittygram_gateway:latest
     ports:
-      - "80:80"
+      - "${GATEWAY_PORT}:80"
     volumes:
       - static_volume:/static
       - media_volume:/media

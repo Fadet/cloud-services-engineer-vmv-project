@@ -177,6 +177,7 @@ jobs:
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=${{ secrets.DB_PORT }}
+            GATEWAY_PORT=${{ vars.GATEWAY_PORT }}
             EOF
 
       - name: Deploy to server
