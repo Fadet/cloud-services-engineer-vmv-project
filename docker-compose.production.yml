@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13-alpine
+    env_file:
+      - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    image: kittygram_backend:latest
+    env_file:
+      - .env
+    volumes:
+      - static_volume:/app/collected_static
+      - media_volume:/app/media
+    depends_on:
+      - postgres
+
+  frontend:
+    image: kittygram_frontend:latest
+    volumes:
+      - static_volume:/static_files
+    entrypoint: sh -c "cp -r /app/build/. /static_files/ && exit 0"
+
+  gateway:
+    image: kittygram_gateway:latest
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/static
+      - media_volume:/media
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  pg_data:
+  static_volume:
+  media_volume:

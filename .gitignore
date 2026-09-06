@@ -1,1 +1,11 @@
 .DS_Store
+.env
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+.pytest_cache/
+__pycache__/
+*.pyc
