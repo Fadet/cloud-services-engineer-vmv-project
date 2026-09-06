@@ -1,0 +1,95 @@
+name: Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Select the Terraform action
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    name: Terraform ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./infra
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_KEY }}
+      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+      TF_IN_AUTOMATION: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+          terraform_wrapper: false
+
+      - name: Set up Yandex Cloud credentials
+        env:
+          YC_SERVICE_ACCOUNT_KEY: ${{ secrets.YC_SERVICE_ACCOUNT_KEY }}
+        run: |
+          printf '%s' "$YC_SERVICE_ACCOUNT_KEY" > "$RUNNER_TEMP/yc-key.json"
+          echo "YC_SERVICE_ACCOUNT_KEY_FILE=$RUNNER_TEMP/yc-key.json" >> "$GITHUB_ENV"
+
+      - name: Configure Terraform provider mirror
+        run: |
+          cat > "$RUNNER_TEMP/terraformrc" <<'EOF'
+          provider_installation {
+            network_mirror {
+              url     = "https://terraform-mirror.yandexcloud.net/"
+              include = ["registry.terraform.io/yandex-cloud/yandex"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/yandex-cloud/yandex"]
+            }
+          }
+          EOF
+          echo "TF_CLI_CONFIG_FILE=$RUNNER_TEMP/terraformrc" >> "$GITHUB_ENV"
+
+      - name: Terraform Init
+        run: terraform init -reconfigure -backend-config="bucket=$TF_STATE_BUCKET"
+
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        if: ${{ inputs.action == 'plan' }}
+        run: terraform plan -input=false
+
+      - name: Terraform Apply
+        if: ${{ inputs.action == 'apply' }}
+        run: terraform apply -auto-approve -input=false
+
+      - name: Terraform Destroy
+        if: ${{ inputs.action == 'destroy' }}
+        run: terraform destroy -auto-approve -input=false
+
+      - name: Show infrastructure outputs
+        if: ${{ inputs.action == 'apply' }}
+        run: |
+          echo "## Kittygram infrastructure" >> "$GITHUB_STEP_SUMMARY"
+          echo "- IP: $(terraform output -raw vm_external_ip)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: $(terraform output -raw kittygram_url)" >> "$GITHUB_STEP_SUMMARY"
